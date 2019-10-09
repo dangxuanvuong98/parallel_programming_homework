@@ -1,0 +1,33 @@
+Quick install:
+sudo apt-get install libcr-dev mpich
+
+----------------------------------------
+
+Manual install:
+
+1.Go to http://www.open-mpi.org and download the latest  .tar.gz package
+
+2. Create a directory to install OpenMPI and go into it
+
+$ mkdir $HOME/openmpi
+$ cd $HOME/openmpi
+
+3. Copy the .tar.gz file into this directory:
+
+$ cp $HOME/Downloads/openmpi-1.8.7.tar.gz $HOME/openmpi
+
+4. Extract the package and go into the extracted directory:
+
+$ tar -xzvf openmpi-1.8.7.tar.gz
+$ cd openmpi-1.8.7
+
+5. Configure and compile (this step may take about 5-10 minutes):
+
+$ ./configure --prefix=$HOME/openmpi
+$ make all
+
+6. Finally install using the following command:
+
+$ make install
+
+Add OpenMPI to your PATH and LD_LIBRARY_PATH environment variable.
