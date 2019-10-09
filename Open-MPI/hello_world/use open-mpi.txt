@@ -1,0 +1,2 @@
+Compile: mpicc file-name
+Run: mpirun -np num-of-processes file-name
