@@ -1,2 +1,9 @@
 Compile: mpicc file-name
 Run: mpirun -np num-of-processes file-name
+
+
+mpirun -H localhost:32 -np 32 ./b1
+mpirun --hostfile hostfile -np 32 ./b1
+
+mpirun --hostfile hostfile ./b1
+mpirun -H localhost:8 -H slave-node-hieu-02:8 ./b1
