@@ -1,0 +1,7 @@
+Modeling
+	c: concentration (molecules/m^3)
+	J: flux
+	D: diffusion coefficient (m^2/s)
+		J = -D * ∇c
+		(∂c/∂t) * dV = (Jx(x) - Jx(x + dx))dydz + (Jy(y) - Jy(y + dy))dxdz + (Jz(z) - Jz(z + dz))dxdy
+		∂c/∂t = - (∂Jx/∂x + ∂Jy/∂y + ∂Jz/∂z) = -∇⋅J = D(∇^2)*c
