@@ -5,3 +5,16 @@ Modeling
 		J = -D * ∇c
 		(∂c/∂t) * dV = (Jx(x) - Jx(x + dx))dydz + (Jy(y) - Jy(y + dy))dxdz + (Jz(z) - Jz(z + dz))dxdy
 		∂c/∂t = - (∂Jx/∂x + ∂Jy/∂y + ∂Jz/∂z) = -∇⋅J = D(∇^2)*c
+
+		∂c/∂t = D(∂^2c/∂x^2 + ∂^2c/∂y^2)
+
+		t = n * δt, t = 0, 1, 2, 3,...
+		x = l * δx, l = 0, 1, 2, 3,... L with δx = 1/L
+		y = m * δy, l = 0, 1, 2, 3,... M with δy = 1/M
+
+		c(lδx, mδy, nδt) ≡ c^n_l,m
+
+		c(x, y, t + δt) = c(x, y, t) + δt * (∂c(x, y, t) / ∂t) + O(δt^2)
+			with small δt:
+			∂c(x, y, t) / ∂t = (c(x, y, t + δt) - c(x, y, t)) / δt
+			or c^n_l,m = c^n+1_l,m - c^n_l,m

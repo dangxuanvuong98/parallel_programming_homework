@@ -1,0 +1,9 @@
+\begin{frame}{Bài toán Diffusion Limited Aggregation}
+\begin{itemize}
+	\item Cho một lưới kích thước $(N + 1) \times (N + 1)$. Mỗi ô trên lưới được chiếm bởi một lượng thức ăn $c$ $(0 \leq c \leq 1)$ hoặc bởi trực khuẩn ($c = 0$).
+	\item Các ô có toạ độ $(x, N), \forall x \in [0, N]$ là \emph{source}: $c = 1$.
+	\item Các ô có toạ độ $(x, 0), \forall x \in [0, N]$ hoặc bị trực khuẩn chiếm là \emph{sink}: $c = 0$.
+	\item Trực khuẩn ban đầu chiếm một số ô trong lưới và sẽ lớn dần theo thời gian. Tại mỗi bước lặp, trực khuẩn có thể phát triển đến các ô liền kề với các ô mà nó đang chiếm, với xác suất phụ thuộc vào lượng thức ăn.
+	\item \textbf{Yêu cầu:} Sử dụng phương pháp lặp \emph{Successive Over Relaxation} để xác định trạng thái \emph{steady} của lưới. 
+\end{itemize}
+\end{frame}
