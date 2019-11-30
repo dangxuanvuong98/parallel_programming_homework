@@ -1,0 +1,17 @@
+\begin{frame}{Công thức cập nhật cho từng trường hợp}
+\begin{itemize}
+	\item Các công thức cập nhật sau được sắp xếp theo thứ tự ưu tiên từ cao xuống thấp
+	\begin{equation}
+		c_{l, m} = 0, \forall (l, m) \in Bacillus
+	\end{equation}
+	\begin{equation}
+		c_{0, m} = 0, \forall m \in [0, N - 1]
+	\end{equation}
+	\begin{equation}
+		c_{N - 1, m} = 1, \forall m \in [0, N - 1]
+	\end{equation}
+    \begin{equation}
+    	c_{l, m} = \frac{\omega}{4}[c_{l + 1, m} + c_{l - 1, m} + c_{l, m + 1} + c_{l, m - 1}] + (1 - \omega)c_{l, m}, \forall l, m \in [0, N - 1]
+    \end{equation}
+\end{itemize}
+\end{frame}
