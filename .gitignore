@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+*.jpg
+*.mp4
+*.log
