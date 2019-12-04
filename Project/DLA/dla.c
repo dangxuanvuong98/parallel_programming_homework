@@ -15,14 +15,19 @@
 #define TAG_SUM_CONCETRATION 8
 
 const int numIteration = 1000;
-const double epsilon = 0.001;
+const double epsilon = 1e-3;
+const double eps = 1e-10;
 const double omega = 1.5;
-const double eta = 2.0;
+const double eta = 1.0;
 const int N = 40;
 const int dl[] = {1, 0, -1, 0};
 const int dm[] = {0, 1, 0, -1};
 
 double max(double a, double b) {
+	return a > b ? a : b;
+}
+
+double maxInt(int a, int b) {
 	return a > b ? a : b;
 }
 
@@ -37,14 +42,12 @@ double _SOR(double *concentration, int l, int m) {
 
 void iteratorLog(int iter, double *concentration, int *bacillus) {
 	char *logFile = (char *) malloc (1024 * sizeof(char));
-	sprintf(logFile, "log_N=%d_eta=%lf_iter=%d.log", N, eta, iter);
-	printf("%s\n", logFile);
+	sprintf(logFile, "./log/log_N=%d_eta=%lf_iter=%d.log", N, eta, iter);
 	FILE *f = fopen(logFile, "w");
-	free(logFile);
 	int l, m;
 	for (l = 0; l < N; l++) {
 		for (m = 0; m < N; m++) {
-			fprintf(f, "%lf ", concentration[N * l + m]);
+			fprintf(f, "%0.2lf ", concentration[N * l + m]);
 		}
 		fprintf(f, "\n");
 	}
@@ -55,6 +58,8 @@ void iteratorLog(int iter, double *concentration, int *bacillus) {
 		}
 		fprintf(f, "\n");
 	}
+	printf("%s\n", logFile);
+	free(logFile);
 }
 
 
@@ -83,12 +88,6 @@ void boundariesConcentrationExchange(int rank, int size,
 			rank - 1, TAG_BELOW_BOUNDARY, MPI_COMM_WORLD, &(request[3]));
 	}
 
-	if (rank > 1) {
-		MPI_Wait(&(request[0]), &status);
-	}
-	if (rank < size - 1) {
-		MPI_Wait(&(request[1]), &status);
-	}
 	if (rank < size - 1) {
 		MPI_Wait(&(request[2]), &status);
 	}
@@ -103,7 +102,7 @@ void boundariesBacillusExchange(int rank, int size,
 	int rWorkload = workload[rank] - workload[rank - 1];
 	MPI_Status status;
 
-	MPI_Request request[3];
+	MPI_Request request[4];
 
 	if (rank > 1) {
 		MPI_Isend(bacillus + N, N, MPI_INT,
@@ -116,20 +115,12 @@ void boundariesBacillusExchange(int rank, int size,
 	if (rank < size - 1) {
 		MPI_Irecv(bacillus + N * (rWorkload + 1), N, MPI_INT,
 			rank + 1, TAG_ABOVE_BOUNDARY, MPI_COMM_WORLD, &(request[2]));
-		MPI_Wait(&(request[2]), &status);
 	}
 	if (rank > 1) {
 		MPI_Irecv(bacillus, N, MPI_INT,
 			rank - 1, TAG_BELOW_BOUNDARY, MPI_COMM_WORLD, &(request[3]));
-		MPI_Wait(&(request[3]), &status);
 	}
 
-	if (rank > 1) {
-		MPI_Wait(&(request[0]), &status);
-	}
-	if (rank < size - 1) {
-		MPI_Wait(&(request[1]), &status);
-	}
 	if (rank < size - 1) {
 		MPI_Wait(&(request[2]), &status);
 	}
@@ -199,7 +190,6 @@ void initialize(int rank, int size, double **concentration, int **bacillus, int 
 }
 
 void divideTask(int rank, int size, double *concentration, int *bacillus, int *workload) {
-	int stop = 0;
 	int r;
 	MPI_Request request[4];
 	for (r = 1; r < size; r++) {
@@ -210,8 +200,6 @@ void divideTask(int rank, int size, double *concentration, int *bacillus, int *w
 			r, TAG_CONCENTRATION, MPI_COMM_WORLD, &(request[1]));
 		MPI_Isend(bacillus + N * workload[r - 1], N * rWorkload, MPI_INT,
 			r, TAG_BACILLUS, MPI_COMM_WORLD, &(request[2]));
-		MPI_Isend(&stop, 1, MPI_INT,
-			r, TAG_STOP, MPI_COMM_WORLD, &(request[3]));
 	}
 }
 
@@ -228,14 +216,12 @@ void recvTask(int rank, int size, double **concentration, int **bacillus, int **
 	int rWorkload = (*workload)[rank] - (*workload)[rank - 1];
 	
 	*concentration = (double *) malloc (N * (rWorkload + 2) * sizeof(double));
-	MPI_Irecv(*concentration + N, N * rWorkload, MPI_DOUBLE,
+	MPI_Irecv((*concentration) + N, N * rWorkload, MPI_DOUBLE,
 		0, TAG_CONCENTRATION, MPI_COMM_WORLD, &(request[1]));
-	MPI_Wait(&(request[1]), &status);
 
 	*bacillus = (int *) malloc (N * (rWorkload + 2) * sizeof(int));
-	MPI_Irecv(*bacillus + N, N * rWorkload, MPI_INT,
+	MPI_Irecv((*bacillus) + N, N * rWorkload, MPI_INT,
 		0, TAG_BACILLUS, MPI_COMM_WORLD, &(request[2]));
-	MPI_Wait(&(request[2]), &status);
 
 	if (rank == 1) {
 		int m;
@@ -248,6 +234,9 @@ void recvTask(int rank, int size, double **concentration, int **bacillus, int **
 			(*bacillus)[N * (rWorkload + 1) + m] = 0;
 		}
 	}
+
+	MPI_Wait(&(request[1]), &status);
+	MPI_Wait(&(request[2]), &status);
 }
 
 void collectConcentration(int rank, int size,
@@ -257,49 +246,67 @@ void collectConcentration(int rank, int size,
 	int stop = 0;
 	int i = 0;
 	MPI_Status status;
-	MPI_Request request[3];
+	MPI_Request request[4];
 
 	int r;
-	while (1) {
+	while (stop != 1) {
+		for (r = 1; r < size; r++) {
+			MPI_Isend(&stop, 1, MPI_INT,
+				r, TAG_STOP, MPI_COMM_WORLD, &(request[2]));
+		}
 		maxError = 0;
 		i++;
+		// printf("Checkpoint: Rank %d collecting concentration at %d-th iteration.\n", rank, i);
 		for (r = 1; r < size; r++) {
 			int rWorkload = workload[r] - workload[r - 1];
-			MPI_Irecv(concentration + workload[r - 1], N * rWorkload, MPI_DOUBLE,
-				r, TAG_CONCENTRATION, MPI_COMM_WORLD, &(request[0]));
-			MPI_Wait(&(request[0]), &status);
 			MPI_Irecv(&error, 1, MPI_DOUBLE,
 				r, TAG_ERROR, MPI_COMM_WORLD, &(request[1]));
 			MPI_Wait(&(request[1]), &status);
 			maxError = max(maxError, error);
 		}
+		// printf("Checkpoint: %d-th iteration error = %lf\n", i, maxError);
 		if (maxError < epsilon) {
 			stop = 1;
 		}
-		for (r = 1; r < size; r++) {
-			MPI_Isend(&stop, 1, MPI_DOUBLE,
-				r, TAG_STOP, MPI_COMM_WORLD, &(request[2]));
-		}
+	}
+	for (r = 1; r < size; r++) {
+		MPI_Isend(&stop, 1, MPI_INT,
+			r, TAG_STOP, MPI_COMM_WORLD, &(request[2]));
+		int rWorkload = workload[r] - workload[r - 1];
+		MPI_Irecv(concentration + N * workload[r - 1], N * rWorkload, MPI_DOUBLE,
+			r, TAG_CONCENTRATION, MPI_COMM_WORLD, &(request[0]));
+		MPI_Irecv(bacillus + N * workload[r - 1], N * rWorkload, MPI_INT,
+			r, TAG_BACILLUS, MPI_COMM_WORLD, &(request[3]));
+		MPI_Wait(&(request[0]), &status);
+		MPI_Wait(&(request[3]), &status);
 	}
 }
 
 void solveDiffusionEquation(int rank, int size,
 	double *concentration, int *bacillus, int *workload) {
 
-	int stop;
+	int stop = 0;
 	int i = 0;
 	MPI_Status status;
-	MPI_Request request[3];
+	MPI_Request request[4];
 	int rWorkload = workload[rank] - workload[rank - 1];
 
-	while (1) {
+	while (stop != 1) {
 		MPI_Irecv(&stop, 1, MPI_INT,
 			0, TAG_STOP, MPI_COMM_WORLD, &(request[0]));
-		// MPI_Wait(&(request[0]), &status);
+		MPI_Wait(&(request[0]), &status);
+		// printf("Checkpoint: Rank %d received stop flag before %d-th iteration.\n", rank, i + 1);
 		if (stop == 1) {
+			MPI_Isend(concentration + N, N * rWorkload, MPI_DOUBLE,
+				0, TAG_CONCENTRATION, MPI_COMM_WORLD, &(request[1]));
+			MPI_Isend(bacillus + N, N * rWorkload, MPI_INT,
+				0, TAG_BACILLUS, MPI_COMM_WORLD, &(request[3]));
+			// MPI_Wait(&(request[1]), &status);
+			// MPI_Wait(&(request[3]), &status);
 			break;
 		}
 		i++;
+		// printf("Checkpoint: Rank %d solving diffusion equation at %d-th iteration.\n", rank, i);
 
 		double maxRedError = updateConcentration(rank, size,
 			concentration, bacillus, workload, 0);
@@ -308,8 +315,6 @@ void solveDiffusionEquation(int rank, int size,
 
 		double maxError = max(maxRedError, maxBlackError);
 
-		MPI_Isend(concentration + N, N * rWorkload, MPI_DOUBLE,
-			0, TAG_CONCENTRATION, MPI_COMM_WORLD, &(request[1]));
 		MPI_Isend(&maxError, 1, MPI_DOUBLE,
 			0, TAG_ERROR, MPI_COMM_WORLD, &(request[2]));
 	}
@@ -331,6 +336,7 @@ void calculateGlobalCandidateConcentration(int rank, int size,
 		MPI_Wait(&(request[0]), &status);
 		globalCandidateConcentration += localCandidateConcentration;
 	}
+	// printf("Checkpoint: Rank %d caculated globalCandidateConcentration\n", rank);
 	
 	for (r = 1; r < size; r++) {
 		MPI_Isend(&globalCandidateConcentration, 1, MPI_DOUBLE,
@@ -343,6 +349,7 @@ void randomGrow(int rank, int size,
 
 	boundariesBacillusExchange(rank, size,
 		concentration, bacillus, workload);
+	// printf("Checkpoint: Rank %d boundariesBacillusExchange\n", rank);
 
 	double localCandidateConcentration = 0;
 	double globalCandidateConcentration;
@@ -351,18 +358,18 @@ void randomGrow(int rank, int size,
 	MPI_Status status;
 	MPI_Request request[2];
 
-	int l, m, i, tmp;
+	int l, m, i;
+	int tmp;
 	for (l = 1; l <= rWorkload; l++) {
 		for (m = 0; m < N; m++) {
 			tmp = 0;
 			for (i = 0; i < 4; i++) {
-				tmp = max(tmp, bacillus[N * (l + dl[i]) + (m + dm[i])]);
+				tmp = maxInt(tmp, bacillus[N * (l + dl[i]) + (m + dm[i])]);
 			}
-			if (bacillus[N * l + m] == 1) {
-				tmp = 0;
+			if (bacillus[N * l + m] == 0) {
+				localCandidateConcentration += concentration[N * l + m] * tmp;
+				bacillus[N * l + m] = -tmp;
 			}
-			localCandidateConcentration += tmp * concentration[N * l + m];
-			bacillus[N * l + m] = -tmp;
 		}
 	}
 
@@ -371,19 +378,25 @@ void randomGrow(int rank, int size,
 	MPI_Irecv(&globalCandidateConcentration, 1, MPI_DOUBLE,
 		0, TAG_SUM_CONCETRATION, MPI_COMM_WORLD, &(request[1]));
 	MPI_Wait(&(request[1]), &status);
+	if (globalCandidateConcentration <= eps) {
+		printf("Checkpoint: globalCandidateConcentration = %lf\n", globalCandidateConcentration);
+		return;
+	}
+	// printf("Checkpoint: Rank %d received globalCandidateConcentration\n", rank);
 
 	double growProbability;
 	double grow;
 	for (l = 1; l <= rWorkload; l++) {
 		for (m = 0; m < N; m++) {
-			tmp = -bacillus[N * l + m];
-			bacillus[N * l + m] = 0;
-
-			growProbability = tmp * concentration[N * l + m] / globalCandidateConcentration;
-			grow = 1.0 * (rand() % (N * N)) / (N * N);
-			if (grow < growProbability) {
-				bacillus[N * l + m] = 1;
-				concentration[N * l + m] = 0;
+			if (bacillus[N * l + m] == -1) {
+				bacillus[N * l + m] = 0;
+				growProbability = concentration[N * l + m] / globalCandidateConcentration;
+				// printf("Checkpoint: %lf - %lf\n", concentration[N * l + m], globalCandidateConcentration);
+				grow = 1.0 * (rand() % (N * N)) / (N * N);
+				if (grow < growProbability) {
+					bacillus[N * l + m] = 1;
+					concentration[N * l + m] = 0;
+				}
 			}
 		}
 	}
@@ -405,13 +418,17 @@ void diffusionSteady(int rank, int size,
 
 	if (rank == 0) {
 		collectConcentration(rank, size, concentration, bacillus, workload);
+		// printf("Checkpoint: Rank %d collected concentration\n", rank);
 	} else {
 		solveDiffusionEquation(rank, size, concentration, bacillus, workload);
+		// printf("Checkpoint: Rank %d solved diffustion equation\n", rank);
 	}
 
 	if (rank == 0) {
 		iteratorLog(iter, concentration, bacillus);
 	}
+
+	// printf("Checkpoint: Rank %d solved diffustion equation.\n", rank);
 }
 
 void main(int argc, char **argv) {
@@ -437,13 +454,16 @@ void main(int argc, char **argv) {
 
 	int iter = 0;
 
-	printf("check point - diffustionSteady - iter %d - rank %d\n", iter, rank);
+	// printf("Checkpoint: Rank %d updating at %d-th iteration.\n", rank, iter);
 	diffusionSteady(rank, size, concentration, bacillus, workload, iter);
-	
+	// printf("Checkpoint: Rank %d solving diffusion equation at %d-th iteration.\n", rank, iter);
+
 	for (iter = 1; iter <= numIteration; iter++) {
-		printf("check point - diffustionSteady - iter %d - rank %d\n", iter, rank);
+		// printf("Checkpoint: Rank %d updating bacillus at %d-th iteration.\n", rank, iter);
 		bacillusGrow(rank, size, concentration, bacillus, workload);
+		// printf("Checkpoint: Rank %d updated bacillus at %d-th iteration.\n", rank, iter);
 		diffusionSteady(rank, size, concentration, bacillus, workload, iter);
+		// printf("Checkpoint: Rank %d updated concentration at %d-th iteration.\n", rank, iter);
 	}
 
 	free(concentration);
