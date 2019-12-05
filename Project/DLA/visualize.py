@@ -12,7 +12,7 @@ eps = 1e-10
 omega = "1.50"
 eta = "1.00"
 N = 40
-FPS = 50
+FPS = 10
 
 C = np.zeros((N, N))
 B = np.zeros((N, N))
@@ -22,7 +22,7 @@ metadata = dict(title='DLA', artist='Dang Xuan Vuong')
 writer = FFMpegWriter(fps=5, metadata=metadata)
 
 fig = plt.figure()
-with writer.saving(fig, "writer_test.mp4", 100):
+with writer.saving(fig, "./video/video_N=" + str(N) + "_eta=" + eta + ".mp4", 100):
 	for i in range(numIteration):
 		if i % FPS == 0:
 			file_name = "./log/log_N=" + str(N) + "_eta=" + eta + "_iter=" + str(i) + ".log"
@@ -46,5 +46,6 @@ with writer.saving(fig, "writer_test.mp4", 100):
 			img = pyplot.imshow(C, interpolation='nearest', cmap='coolwarm', vmin=-1, vmax=1)
 			# img2 = pyplot.imshow(B, cmap='Greys')
 			pyplot.savefig("./image/log_N=" + str(N) + "_eta=" + eta + "_iter=" + str(i) + ".jpg")
+			print("./image/log_N=" + str(N) + "_eta=" + eta + "_iter=" + str(i) + ".jpg")
 			writer.grab_frame()
 			# pyplot.show()

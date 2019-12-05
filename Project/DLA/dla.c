@@ -16,7 +16,7 @@
 
 const int numIteration = 1000;
 const double epsilon = 1e-3;
-const double eps = 1e-10;
+const double eps = 1e-6;
 const double omega = 1.5;
 const double eta = 1.0;
 const int N = 40;
@@ -47,7 +47,7 @@ void iteratorLog(int iter, double *concentration, int *bacillus) {
 	int l, m;
 	for (l = 0; l < N; l++) {
 		for (m = 0; m < N; m++) {
-			fprintf(f, "%0.2lf ", concentration[N * l + m]);
+			fprintf(f, "%lf ", concentration[N * l + m]);
 		}
 		fprintf(f, "\n");
 	}
