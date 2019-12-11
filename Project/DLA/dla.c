@@ -18,8 +18,8 @@ const int numIteration = 1000;
 const double epsilon = 1e-3;
 const double eps = 1e-6;
 const double omega = 1.5;
-const double eta = 1.0;
-const int N = 40;
+const double eta = 0.45;
+const int N = 80;
 const int dl[] = {1, 0, -1, 0};
 const int dm[] = {0, 1, 0, -1};
 
@@ -174,7 +174,7 @@ void initialize(int rank, int size, double **concentration, int **bacillus, int 
 		(*concentration)[N * (N - 1) + m] = 1;
 		(*bacillus)[N * (N - 1) + m] = 0;
 	}
-	(*bacillus)[N / 2] = 1;
+	(*bacillus)[N * (N / 2) + N / 2] = 1;
 
 	int avg_workload = N / (size - 1);
 	int over_workload = N % (size - 1);
@@ -359,7 +359,7 @@ void randomGrow(int rank, int size,
 				tmp = maxInt(tmp, bacillus[N * ((l + dl[i]) % N) + ((m + dm[i]) % N)]);
 			}
 			if (bacillus[N * l + m] == 0) {
-				localCandidateConcentration += concentration[N * l + m] * tmp;
+				localCandidateConcentration += pow(concentration[N * l + m] * tmp, eta);
 				bacillus[N * l + m] = -tmp;
 			}
 		}
@@ -380,7 +380,7 @@ void randomGrow(int rank, int size,
 				if (globalCandidateConcentration <= eps) {
 					continue;
 				}
-				growProbability = concentration[N * l + m] / globalCandidateConcentration;
+				growProbability = pow(concentration[N * l + m], eta) / globalCandidateConcentration;
 				grow = 1.0 * (rand() % (N * N)) / (N * N);
 				if (grow < growProbability) {
 					bacillus[N * l + m] = 1;

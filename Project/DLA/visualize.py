@@ -10,9 +10,9 @@ numIteration = 1000
 epsilon = 1e-3
 eps = 1e-10
 omega = "1.50"
-eta = "1.00"
-N = 40
-FPS = 10
+eta = "0.45"
+N = 80
+FPS = 20
 
 C = np.zeros((N, N))
 B = np.zeros((N, N))
