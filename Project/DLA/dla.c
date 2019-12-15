@@ -14,14 +14,37 @@
 #define TAG_ERROR 7
 #define TAG_SUM_CONCETRATION 8
 
-const int numIteration = 1000;
-const double epsilon = 1e-3;
-const double eps = 1e-6;
-const double omega = 1.5;
-const double eta = 0.45;
-const int N = 80;
 const int dl[] = {1, 0, -1, 0};
 const int dm[] = {0, 1, 0, -1};
+
+int N = 80;
+double eta = 1.00;
+double omega = 1.50;
+double epsilon = 1e-3;
+double infsm = 1e-6;
+int numIteration = 1000;
+
+void readProblemConfiguration() {
+	FILE * f = fopen("config.txt", "r");
+
+	fscanf(f, "%d", &N);
+
+	fscanf(f, "%lf", &eta);
+	eta = round(eta * 1e2) / (1e2);
+
+	fscanf(f, "%lf", &omega);
+	omega = round(omega * 1e2) / (1e2);
+
+	fscanf(f, "%lf", &epsilon);
+	epsilon = round(epsilon * 1e5) / (1e5);
+
+	fscanf(f, "%lf", &infsm);
+	infsm = round(infsm * 1e8) / (1e8);
+
+	fscanf(f, "%d", &numIteration);
+
+	fclose(f);
+}
 
 double max(double a, double b) {
 	return a > b ? a : b;
@@ -42,7 +65,7 @@ double _SOR(double *concentration, int l, int m) {
 
 void iteratorLog(int iter, double *concentration, int *bacillus) {
 	char *logFile = (char *) malloc (1024 * sizeof(char));
-	sprintf(logFile, "./log/log_N=%d_eta=%0.2lf_iter=%d.log", N, eta, iter);
+	sprintf(logFile, "./log/log_N=%d_eta=%0.2lf_omega=%0.2lf_iter=%d.log", N, eta, omega, iter);
 	FILE *f = fopen(logFile, "w");
 	int l, m;
 	for (l = 0; l < N; l++) {
@@ -59,6 +82,7 @@ void iteratorLog(int iter, double *concentration, int *bacillus) {
 		fprintf(f, "\n");
 	}
 	printf("%s\n", logFile);
+	fclose(f);
 	free(logFile);
 }
 
@@ -160,6 +184,8 @@ double updateConcentration(int rank, int size,
 }
 
 void initialize(int rank, int size, double **concentration, int **bacillus, int **workload) {
+
+	readProblemConfiguration();
 
 	*concentration = (double *) malloc (N * N * sizeof(double));
 	*bacillus = (int *) malloc (N * N * sizeof(int));
@@ -377,7 +403,7 @@ void randomGrow(int rank, int size,
 		for (m = 0; m < N; m++) {
 			if (bacillus[N * l + m] == -1) {
 				bacillus[N * l + m] = 0;
-				if (globalCandidateConcentration <= eps) {
+				if (globalCandidateConcentration <= infsm) {
 					continue;
 				}
 				growProbability = pow(concentration[N * l + m], eta) / globalCandidateConcentration;

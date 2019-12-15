@@ -1,0 +1,17 @@
+80
+1.00
+1.50
+0.001
+0.000001
+1000
+5
+25
+
+# N: Kích thước của lưới. Yêu cầu: số nguyên.
+# eta: Hệ số phát triển. Yêu cầu: số thực. Chương trình sẽ tự làm tròn eta đến 2 chữ số phần thập phân.
+# omega: Hệ số mixing. Yêu cầu: số thực. Chương trình sẽ tự làm tròn omega đến 2 chữ số phần thập phân.
+# epsilon: Điều kiện dừng vòng lặp. Yêu cầu: số thực. Chương trình sẽ tự làm tròn epsilon đến 5 chữ số phần thập phân.
+# infsm: Là một số vô cùng nhỏ, mọi số nhỏ hơn số này được coi như bằng 0. Chương trình sẽ tự làm tròn infsm đến 8 chữ số phần thập phân.
+# numIteration: Số vòng lặp quá trình phát triển. Yêu cầu: số nguyên.
+# fps: Video FPS. Yêu cầu: số nguyên.
+# skip_frame: Tỉ lệ tổng số khung hình so với số khung hình dược giữ lại. Yêu cầu: số nguyên.

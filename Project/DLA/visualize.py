@@ -6,27 +6,33 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.animation as manimation
 
-numIteration = 1000
-epsilon = 1e-3
-eps = 1e-10
-omega = "1.50"
-eta = "0.45"
-N = 80
-FPS = 20
+f = open("config.txt", "r")
+
+N = int(f.readline())
+eta = "{0:.2f}".format(round(float(f.readline()), 2))
+omega = "{0:.2f}".format(round(float(f.readline()), 2))
+epsilon = "{0:.5f}".format(round(float(f.readline()), 5))
+infsm = "{0:.8f}".format(round(float(f.readline()), 8))
+numIteration = int(f.readline())
+fps = int(f.readline())
+skip_frame = int(f.readline())
+
+f.close()
 
 C = np.zeros((N, N))
 B = np.zeros((N, N))
 
 FFMpegWriter = manimation.writers['ffmpeg']
 metadata = dict(title='DLA', artist='Dang Xuan Vuong')
-writer = FFMpegWriter(fps=5, metadata=metadata)
+writer = FFMpegWriter(fps=fps, metadata=metadata)
 
 fig = plt.figure()
-with writer.saving(fig, "./video/video_N=" + str(N) + "_eta=" + eta + ".mp4", 100):
+video_name = "./video/video_N={0:d}_eta={1:s}_omega={2:s}.mp4".format(N, eta, omega)
+with writer.saving(fig, video_name, 100):
 	for i in range(numIteration):
-		if i % FPS == 0:
-			file_name = "./log/log_N=" + str(N) + "_eta=" + eta + "_iter=" + str(i) + ".log"
-			file = open(file_name, "r")
+		if i % skip_frame == 0:
+			log_file = "./log/log_N={0:d}_eta={1:s}_omega={2:s}_iter={3:d}.log".format(N, eta, omega, i)
+			file = open(log_file, "r")
 			for l in range(N):
 				line = file.readline()
 				line = line.split(' ')
@@ -44,8 +50,7 @@ with writer.saving(fig, "./video/video_N=" + str(N) + "_eta=" + eta + ".mp4", 10
 						C[l, m] = -1
 
 			img = pyplot.imshow(C, interpolation='nearest', cmap='coolwarm', vmin=-1, vmax=1)
-			# img2 = pyplot.imshow(B, cmap='Greys')
-			pyplot.savefig("./image/log_N=" + str(N) + "_eta=" + eta + "_iter=" + str(i) + ".jpg")
+			image_name = "./image/log_N={0:d}_eta={1:s}_omega={2:s}_iter={3:d}.jpg".format(N, eta, omega, i)
+			pyplot.savefig(image_name)
 			print("./image/log_N=" + str(N) + "_eta=" + eta + "_iter=" + str(i) + ".jpg")
 			writer.grab_frame()
-			# pyplot.show()
