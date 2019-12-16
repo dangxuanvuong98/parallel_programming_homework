@@ -9,6 +9,9 @@ import matplotlib.animation as manimation
 f = open("config.txt", "r")
 
 N = int(f.readline())
+# 2 hàm f.readline() tiếp theo để bỏ qua thông tin về trạng thái khởi tạo của trực khuẩn
+f.readline()
+f.readline()
 eta = "{0:.2f}".format(round(float(f.readline()), 2))
 omega = "{0:.2f}".format(round(float(f.readline()), 2))
 epsilon = "{0:.5f}".format(round(float(f.readline()), 5))

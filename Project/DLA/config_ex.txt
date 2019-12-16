@@ -1,4 +1,6 @@
 80
+2
+0 20 0 40
 1.00
 1.50
 0.001
@@ -8,6 +10,8 @@
 25
 
 # N: Kích thước của lưới. Yêu cầu: số nguyên.
+# numInitialBacillus: Số tế bào trực khuẩn ở trạng thái khởi tạo. Yêu cầu: số nguyên <= N * N
+# 2 * numInitialBacillus số nguyên, mỗi cặp số tương ứng với tọa độ ô xuất phát của 1 tế bào trực khuẩn.
 # eta: Hệ số phát triển. Yêu cầu: số thực. Chương trình sẽ tự làm tròn eta đến 2 chữ số phần thập phân.
 # omega: Hệ số mixing. Yêu cầu: số thực. Chương trình sẽ tự làm tròn omega đến 2 chữ số phần thập phân.
 # epsilon: Điều kiện dừng vòng lặp. Yêu cầu: số thực. Chương trình sẽ tự làm tròn epsilon đến 5 chữ số phần thập phân.
